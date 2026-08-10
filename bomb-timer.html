@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bomb Timer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=IBM+Plex+Mono:wght@500;700&display=swap');
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    width: 100%;
+    background: radial-gradient(circle at 50% 20%, #2a1b3d 0%, #150e21 60%, #0a0611 100%);
+    color: #FFE9F5;
+    font-family: 'Baloo 2', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  .title {
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #FF6FB0;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
+
+  .bomb-wrap {
+    position: relative;
+    width: 260px;
+    height: 320px;
+    margin-bottom: 30px;
+  }
+
+  .fuse {
+    position: absolute;
+    top: -38px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-8deg);
+    width: 10px;
+    height: 50px;
+    background: linear-gradient(#4a3623, #2b1e13);
+    border-radius: 6px;
+    transform-origin: bottom center;
+    z-index: 1;
+  }
+
+  .spark {
+    position: absolute;
+    top: -52px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+    z-index: 2;
+    animation: flicker 0.4s infinite alternate;
+  }
+
+  @keyframes flicker {
+    from { transform: translateX(-50%) scale(1) rotate(-5deg); filter: brightness(1); }
+    to   { transform: translateX(-50%) scale(1.15) rotate(5deg); filter: brightness(1.3); }
+  }
+
+  .bomb-body {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin-top: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6b3fa0 0%, #3d2266 55%, #241143 100%);
+    box-shadow:
+      inset -18px -18px 40px rgba(0,0,0,0.5),
+      inset 12px 12px 30px rgba(255,255,255,0.08),
+      0 0 60px rgba(255, 111, 176, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #1b0d33;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .bomb-body.armed {
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: inset -18px -18px 40px rgba(0,0,0,0.5), inset 12px 12px 30px rgba(255,255,255,0.08), 0 0 60px rgba(255, 111, 176, 0.25); }
+    50% { box-shadow: inset -18px -18px 40px rgba(0,0,0,0.5), inset 12px 12px 30px rgba(255,255,255,0.08), 0 0 90px rgba(255, 90, 90, 0.55); }
+  }
+
+  .face {
+    position: relative;
+    width: 170px;
+    height: 170px;
+  }
+
+  .eye {
+    position: absolute;
+    top: 55px;
+    width: 34px;
+    height: 40px;
+    background: #FFE9F5;
+    border-radius: 50% 50% 55% 55%;
+  }
+  .eye.left { left: 22px; }
+  .eye.right { right: 22px; }
+
+  .pupil {
+    position: absolute;
+    top: 12px;
+    left: 9px;
+    width: 16px;
+    height: 22px;
+    background: #FF2E7E;
+    border-radius: 50%;
+  }
+
+  .pupil::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .blush {
+    position: absolute;
+    top: 92px;
+    width: 22px;
+    height: 12px;
+    background: #FF6FB0;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+  .blush.left { left: 14px; }
+  .blush.right { right: 14px; }
+
+  .mouth {
+    position: absolute;
+    top: 100px;
+    left: 65px;
+    width: 40px;
+    height: 20px;
+    border-bottom: 5px solid #FFE9F5;
+    border-radius: 0 0 50% 50%;
+  }
+
+  .mouth::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 8px;
+    width: 8px;
+    height: 12px;
+    background: #FFE9F5;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+
+  .horn {
+    position: absolute;
+    top: -6px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 26px solid #2a1443;
+  }
+  .horn.left { left: 18px; transform: rotate(-18deg); }
+  .horn.right { right: 18px; transform: rotate(18deg); }
+
+  .shine {
+    position: absolute;
+    top: 40px;
+    left: 45px;
+    width: 50px;
+    height: 30px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    filter: blur(4px);
+  }
+
+  .timer-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 40px;
+    font-weight: 700;
+    color: #FFE9F5;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+    text-shadow: 0 0 20px rgba(255, 111, 176, 0.6);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .presets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .preset-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,111,176,0.4);
+    color: #FFE9F5;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .preset-btn:hover { background: rgba(255,111,176,0.25); }
+
+  .custom-input {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+
+  .custom-input input {
+    width: 70px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,111,176,0.4);
+    background: rgba(0,0,0,0.3);
+    color: #FFE9F5;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .custom-input span {
+    font-size: 13px;
+    color: #d8b8e8;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    border: none;
+    cursor: pointer;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    border-radius: 24px;
+    padding: 13px 30px;
+    transition: transform 0.1s ease, filter 0.15s ease;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-start { background: linear-gradient(#FF6FB0, #FF2E7E); color: #fff; }
+  .btn-stop { background: #FFE9F5; color: #3d2266; }
+  .btn-reset { background: transparent; border: 1px solid rgba(255,111,176,0.5); color: #FFE9F5; }
+
+  .msg {
+    margin-top: 20px;
+    font-size: 15px;
+    color: #FF9FCB;
+    font-weight: 700;
+    min-height: 22px;
+    text-align: center;
+  }
+
+  .boom {
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translate(0,0) rotate(0); }
+    20% { transform: translate(-6px, 3px) rotate(-3deg); }
+    40% { transform: translate(6px, -3px) rotate(3deg); }
+    60% { transform: translate(-5px, 2px) rotate(-2deg); }
+    80% { transform: translate(5px, -2px) rotate(2deg); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="title">Mutsuki's Bomb Timer</div>
+
+  <div class="bomb-wrap">
+    <div class="fuse" id="fuse"></div>
+    <div class="spark" id="spark" style="display:none;">✨</div>
+    <div class="bomb-body" id="bombBody">
+      <div class="face">
+        <div class="horn left"></div>
+        <div class="horn right"></div>
+        <div class="shine"></div>
+        <div class="eye left"><div class="pupil"></div></div>
+        <div class="eye right"><div class="pupil"></div></div>
+        <div class="blush left"></div>
+        <div class="blush right"></div>
+        <div class="mouth"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-display" id="display">00:30</div>
+
+  <div class="presets">
+    <button class="preset-btn" data-sec="10">10초</button>
+    <button class="preset-btn" data-sec="30">30초</button>
+    <button class="preset-btn" data-sec="60">1분</button>
+    <button class="preset-btn" data-sec="300">5분</button>
+  </div>
+
+  <div class="custom-input">
+    <input type="number" id="customMin" placeholder="분" min="0" />
+    <span>분</span>
+    <input type="number" id="customSec" placeholder="초" min="0" max="59" />
+    <span>초</span>
+    <button class="preset-btn" id="setCustom">설정</button>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="startBtn">점화!</button>
+    <button class="btn btn-reset" id="resetBtn">리셋</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+<script>
+  let totalSeconds = 30;
+  let remaining = totalSeconds;
+  let running = false;
+  let intervalId = null;
+
+  const display = document.getElementById('display');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const bombBody = document.getElementById('bombBody');
+  const spark = document.getElementById('spark');
+  const msg = document.getElementById('msg');
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+
+  function render() {
+    display.textContent = formatTime(remaining);
+  }
+
+  function setTotal(sec) {
+    if (running) return;
+    totalSeconds = sec;
+    remaining = sec;
+    render();
+    msg.textContent = '';
+    bombBody.classList.remove('boom');
+  }
+
+  document.querySelectorAll('.preset-btn[data-sec]').forEach(btn => {
+    btn.addEventListener('click', () => setTotal(parseInt(btn.dataset.sec)));
+  });
+
+  document.getElementById('setCustom').addEventListener('click', () => {
+    const min = parseInt(document.getElementById('customMin').value) || 0;
+    const sec = parseInt(document.getElementById('customSec').value) || 0;
+    const total = min * 60 + sec;
+    if (total > 0) setTotal(total);
+  });
+
+  startBtn.addEventListener('click', () => {
+    if (running) {
+      running = false;
+      clearInterval(intervalId);
+      spark.style.display = 'none';
+      bombBody.classList.remove('armed');
+      startBtn.textContent = '점화!';
+      resetBtn.disabled = false;
+      msg.textContent = '⏸ 잠깐 멈췄어';
+      return;
+    }
+    if (remaining <= 0) return;
+    running = true;
+    spark.style.display = 'block';
+    bombBody.classList.add('armed');
+    startBtn.textContent = '멈춰!';
+    resetBtn.disabled = true;
+    msg.textContent = '째깍째깍... 도망 못 가~';
+
+    intervalId = setInterval(() => {
+      remaining--;
+      render();
+      if (remaining <= 0) {
+        clearInterval(intervalId);
+        running = false;
+        spark.style.display = 'none';
+        bombBody.classList.remove('armed');
+        bombBody.classList.add('boom');
+        startBtn.textContent = '점화!';
+        startBtn.disabled = true;
+        resetBtn.disabled = false;
+        msg.textContent = '💥 쾅! 시간 다 됐어, 선생~';
+      }
+    }, 1000);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    running = false;
+    clearInterval(intervalId);
+    remaining = totalSeconds;
+    render();
+    spark.style.display = 'none';
+    bombBody.classList.remove('armed', 'boom');
+    startBtn.disabled = false;
+    startBtn.textContent = '점화!';
+    msg.textContent = '';
+  });
+
+  render();
+</script>
+
+</body>
+</html>

@@ -2,8 +2,7 @@ streamlit
 pandas
 numpy
 opencv-python-headless
-pillow
-openpyxl
 matplotlib
-streamlit-drawable-canvas
-streamlit==1.28.2
+Pillow
+openpyxl
+streamlit-image-coordinates

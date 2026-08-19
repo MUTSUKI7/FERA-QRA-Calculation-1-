@@ -6,4 +6,4 @@ pillow
 openpyxl
 matplotlib
 streamlit-drawable-canvas
-streamlit==1.28.2
+
